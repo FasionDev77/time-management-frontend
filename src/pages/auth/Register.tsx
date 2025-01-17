@@ -1,8 +1,13 @@
 import React from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
-import { Button, Form, Input, InputNumber, message } from "antd";
-import { UserAddOutlined } from "@ant-design/icons";
+import { Button, Form, Input, message } from "antd";
+import {
+  UserOutlined,
+  UserAddOutlined,
+  MailOutlined,
+  LockOutlined,
+} from "@ant-design/icons";
 
 import { RegisterValuesInterface } from "../../types/auth.types/register.values.interface";
 
@@ -58,18 +63,17 @@ const Register: React.FC = () => {
           email: values.email,
           name: values.name,
           password: values.password,
-          preferredWorkingHours: values.workingHours,
         }
       );
-  
+
       // Handle success
       message.success(response.data.message || "Registered successfully!");
-      navigate('/')
+      navigate("/");
     } catch (error: unknown) {
       // Handle error
       const errorMessage =
-        (error as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message || "Something went wrong!";
+        (error as { response?: { data?: { message?: string } } })?.response
+          ?.data?.message || "Something went wrong!";
       message.error(errorMessage);
     }
   };
@@ -77,56 +81,42 @@ const Register: React.FC = () => {
     <div className="auth-container">
       <h2 className="form-title">Time Management System</h2>
       <Form
-        labelCol={{ span: 7 }}
-        wrapperCol={{ span: 16 }}
         name="register-form"
         onFinish={handleSubmit}
-        style={{ maxWidth: 600 }}
         validateMessages={validateMessages}
-        initialValues={{
-          workingHours: 8,
-        }}
       >
-        <Form.Item
-          name="email"
-          label="Email"
-          rules={[{ type: "email" }, { required: true }]}
-        >
-          <Input />
+        <Form.Item name="email" rules={[{ type: "email" }, { required: true }]}>
+          <Input prefix={<MailOutlined />} placeholder="Email" />
         </Form.Item>
-        <Form.Item name="name" label="Name" rules={[{ required: true }]}>
-          <Input />
+        <Form.Item name="name" rules={[{ required: true }]}>
+          <Input prefix={<UserOutlined />} placeholder="Name" />
         </Form.Item>
-
         <Form.Item
           name="password"
-          label="Password"
           rules={[{ validator: validatePassword }]}
           hasFeedback
         >
-          <Input.Password />
+          <Input.Password prefix={<LockOutlined />} placeholder="Password" />
         </Form.Item>
-
         <Form.Item
           name="confirm"
-          label="Confirm Password"
           dependencies={["password"]}
           hasFeedback
           rules={[
             ({ getFieldValue }) => confirmPasswordValidator(getFieldValue),
           ]}
         >
-          <Input.Password />
+          <Input.Password
+            prefix={<LockOutlined />}
+            placeholder="Confirm Password"
+          />
         </Form.Item>
-        <Form.Item
-          name="workingHours"
-          label="Working Hours"
-          rules={[{ type: "number", min: 0, max: 8 }]}
-        >
-          <InputNumber />
-        </Form.Item>
+        <span className="flex-right">
+          Already have an account? <Link to="/">&nbsp;Login now</Link>
+        </span>
         <Form.Item label={null}>
           <Button
+            className="mt-10"
             type="primary"
             htmlType="submit"
             icon={<UserAddOutlined />}
@@ -134,11 +124,6 @@ const Register: React.FC = () => {
           >
             Register
           </Button>
-        </Form.Item>
-        <Form.Item label="(">
-          <span>
-            Already have an account? <Link to="/">Login</Link>
-          </span>
         </Form.Item>
       </Form>
     </div>

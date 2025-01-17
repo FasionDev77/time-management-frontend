@@ -1,6 +1,8 @@
 import React from "react";
 import { Layout, Button, Table } from "antd";
-import { PlusOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
+import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
+
+import HandleRecord from "./handleRecord";
 
 const { Content } = Layout;
 
@@ -10,18 +12,7 @@ const PContent: React.FC = () => {
       className="content-section"
       style={{ margin: "16px", backgroundColor: "#fff", padding: "16px" }}
     >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          marginBottom: "16px",
-        }}
-      >
-        <Button type="primary" icon={<PlusOutlined />}>
-          Create
-        </Button>
-      </div>
-
+      <HandleRecord />
       {/* Table */}
       <Table
         bordered
@@ -29,7 +20,7 @@ const PContent: React.FC = () => {
           {
             key: "1",
             description: "Store Name",
-            duration: "3",
+            hours: "3",
             date: "2023-05-01",
           },
         ]}
@@ -41,9 +32,9 @@ const PContent: React.FC = () => {
           },
           { title: "Date", dataIndex: "date", key: "date" },
           {
-            title: "Duration / hr",
-            dataIndex: "duration",
-            key: "duration",
+            title: "Hour(s)",
+            dataIndex: "hours",
+            key: "hours",
           },
           {
             title: "Actions",

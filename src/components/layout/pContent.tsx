@@ -19,12 +19,12 @@ const PContent: React.FC = () => {
           },
         ]}
         columns={[
+          { title: "Date", dataIndex: "date", key: "date" },
           {
             title: "Description",
             dataIndex: "description",
             key: "description",
           },
-          { title: "Date", dataIndex: "date", key: "date" },
           {
             title: "Hour(s)",
             dataIndex: "hours",
@@ -35,12 +35,8 @@ const PContent: React.FC = () => {
             key: "actions",
             render: () => (
               <div>
-                <Button type="link" icon={<EditOutlined />}>
-                  Edit
-                </Button>
-                <Button type="link" icon={<DeleteOutlined />} danger>
-                  Delete
-                </Button>
+                <Button type="link" icon={<EditOutlined />}></Button>
+                <Button type="link" icon={<DeleteOutlined />} danger></Button>
               </div>
             ),
           },

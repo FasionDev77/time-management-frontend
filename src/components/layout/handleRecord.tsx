@@ -1,15 +1,7 @@
-import React, { useState } from "react";
+import React from "react";
 import dayjs from "dayjs";
 import { PlusOutlined } from "@ant-design/icons";
-import {
-  DatePicker,
-  Button,
-  Modal,
-  Form,
-  Input,
-  InputNumber,
-  message,
-} from "antd";
+import { DatePicker, Button, Form, Input, InputNumber, message } from "antd";
 
 import axiosInstance from "../../api/axiosInstance";
 
@@ -28,7 +20,6 @@ const rangePresets: TimeRangePickerProps["presets"] = [
 ];
 
 const HandleRecord: React.FC = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [form] = Form.useForm();
 
   const onRangeChange = async (
@@ -62,9 +53,8 @@ const HandleRecord: React.FC = () => {
       };
 
       const response = await axiosInstance.post("/records", payload);
-      message.success(response.data.message || "Record created successfully");
-      setIsModalOpen(false);
       form.resetFields();
+      message.success(response.data.message || "Record created successfully");
     } catch (error: unknown) {
       if (error instanceof Error) {
         message.error(
@@ -77,60 +67,51 @@ const HandleRecord: React.FC = () => {
     }
   };
 
-  const handleModalOk = () => {
-    form.submit();
-  };
-
   return (
     <div>
       <div className="item-display-center mb-16">
         <RangePicker presets={rangePresets} onChange={onRangeChange} />
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => setIsModalOpen(true)}
+        <Form
+        form={form}
+          layout="inline"
+          variant="filled"
+          name="record-form"
+          autoComplete="off"
+          onFinish={handleCreate}
+          initialValues={{
+            date: dayjs(),
+            description: "",
+            duration: 1,
+          }}
         >
-          Create
-        </Button>
-        <Modal
-          title="Add Record"
-          open={isModalOpen}
-          onOk={handleModalOk}
-          onCancel={() => setIsModalOpen(false)}
-        >
-          <Form
-            form={form}
-            name="record-form"
-            labelCol={{ span: 5 }}
-            wrapperCol={{ span: 17 }}
-            autoComplete="off"
-            onFinish={handleCreate}
-            initialValues={{
-              date: dayjs(), // Default date as current date
-              duration: 1, // Default duration
-            }}
-          >
-            <Form.Item label="Date" name="date">
-              <DatePicker />
-            </Form.Item>
+          <Form.Item label="Date" name="date">
+            <DatePicker />
+          </Form.Item>
 
-            <Form.Item
-              label="Description"
-              name="description"
-              rules={[{ required: true, message: "Description is required" }]}
-            >
-              <Input />
-            </Form.Item>
-            <Form.Item
-              label="Hour(s)"
-              name="duration"
-              rules={[{ required: true }]}
-            >
-              <InputNumber min={0} max={12} />
-            </Form.Item>
-          </Form>
-        </Modal>
+          <Form.Item
+            label="Description"
+            name="description"
+            style={{width: 700}}
+            rules={[{ required: true, message: "Description is required" }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            label="Hour(s)"
+            name="duration"
+            rules={[{ required: true }]}
+          >
+            <InputNumber min={0} max={12} />
+          </Form.Item>
+          <Form.Item>
+            <Button type="primary" icon={<PlusOutlined />} htmlType="submit">
+              Create
+            </Button>
+          </Form.Item>
+        </Form>
       </div>
     </div>
   );
-};export default HandleRecord;
+};
+
+export default HandleRecord;

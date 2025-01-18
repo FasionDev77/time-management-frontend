@@ -6,6 +6,7 @@ import { MailOutlined, LockOutlined } from "@ant-design/icons";
 import type { FormProps } from "antd";
 
 import axiosInstance from "../../api/axiosInstance";
+import { useAppContext } from "../../context/App.Context";
 
 type FieldType = {
   email?: string;
@@ -22,6 +23,7 @@ const validateMessages = {
 
 const App: React.FC = () => {
   const navigate = useNavigate();
+  const { setAuthToken } = useAppContext();
 
   const handleSubmit: FormProps<FieldType>["onFinish"] = async (values) => {
     try {
@@ -29,7 +31,9 @@ const App: React.FC = () => {
         email: values.email,
         password: values.password,
       });
-      localStorage.setItem("authToken", response.data.token);
+      const { token } = response.data;
+      setAuthToken(token);
+      localStorage.setItem("authToken", token);
       navigate("/dashboard");
       message.success("Login successful!");
     } catch (error) {

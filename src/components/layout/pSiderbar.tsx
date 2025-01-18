@@ -4,21 +4,24 @@ import { Layout, Menu, Typography } from "antd";
 import {
   UserOutlined,
   LogoutOutlined,
-  DashboardOutlined ,
+  DashboardOutlined,
 } from "@ant-design/icons";
+import { useAppContext } from "../../context/App.Context";
 
 const { Sider } = Layout;
 
 const PSiderbar: React.FC = () => {
   const navigate = useNavigate();
+  const { userInfo, logout } = useAppContext();
 
   const handleMenuClick = (key: string) => {
-    if (key === '1') {
-      navigate('/dashboard');
-    } else if (key === '2') {
-      navigate('/dashboard/profile');
-    } else if (key === '3') {
-      console.log('Logout clicked'); // Implement logout logic here
+    if (key === "1") {
+      navigate("/dashboard");
+    } else if (key === "2") {
+      navigate("/dashboard/profile");
+    } else if (key === "3") {
+      navigate("/"); // Implement logout logic here
+      logout();
     }
   };
 
@@ -29,11 +32,8 @@ const PSiderbar: React.FC = () => {
         boxShadow: "2px 0 8px rgba(0, 0, 0, 0.1)",
       }}
     >
-      <Typography.Title
-        level={4}
-        className="text-center mb-3"
-      >
-        James Sullivan
+      <Typography.Title level={4} className="text-center mb-3">
+        {userInfo?.name}
       </Typography.Title>
       <Menu
         mode="inline"
@@ -42,7 +42,11 @@ const PSiderbar: React.FC = () => {
         items={[
           { key: "1", label: "Dashboard", icon: <DashboardOutlined /> },
           { key: "2", label: "Profile", icon: <UserOutlined /> },
-          { key: "3", label: "Logout", icon: <LogoutOutlined /> },
+          {
+            key: "3",
+            label: "Logout",
+            icon: <LogoutOutlined onClick={logout} />,
+          },
         ]}
       />
     </Sider>

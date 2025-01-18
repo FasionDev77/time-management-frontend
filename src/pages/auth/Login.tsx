@@ -1,9 +1,11 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import type { FormProps } from "antd";
-import axios from "axios";
 import { Button, Form, Input, message } from "antd";
 import { MailOutlined, LockOutlined } from "@ant-design/icons";
+
+import type { FormProps } from "antd";
+
+import axiosInstance from "../../api/axiosInstance";
 
 type FieldType = {
   email?: string;
@@ -20,16 +22,13 @@ const validateMessages = {
 
 const App: React.FC = () => {
   const navigate = useNavigate();
-  
+
   const handleSubmit: FormProps<FieldType>["onFinish"] = async (values) => {
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/login",
-        {
-          email: values.email,
-          password: values.password,
-        }
-      );
+      const response = await axiosInstance.post("/auth/login", {
+        email: values.email,
+        password: values.password,
+      });
       localStorage.setItem("authToken", response.data.token);
       navigate("/dashboard");
       message.success("Login successful!");
@@ -40,7 +39,7 @@ const App: React.FC = () => {
       message.error(errorMessage);
     }
   };
-  
+
   return (
     <div className="auth-container">
       <h2 className="form-title">Time Management System</h2>

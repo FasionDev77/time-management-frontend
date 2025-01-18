@@ -1,5 +1,6 @@
 import { Layout } from "antd";
 import { Routes, Route } from "react-router-dom";
+import { Content } from "antd/es/layout/layout";
 
 import PSiderbar from "../components/layout/pSiderbar";
 import PHeader from "../components/layout/pHeader";
@@ -13,11 +14,13 @@ const LandingPage = () => {
       <PSiderbar />
       <Layout>
         <PHeader />
-        <Routes>
-            <Route path="/" element={<PContent />} />
-            <Route path="/profile" element={<Profile />} />
+        <Content className="content-section mp-16 bg-fff">
+          <Routes>
+            <Route path="" element={<PContent />} />
+            <Route path="profile" element={<Profile />} />
           </Routes>
-        <PFooter/>
+        </Content>
+        <PFooter />
       </Layout>
     </Layout>
   );

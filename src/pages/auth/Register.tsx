@@ -1,5 +1,4 @@
 import React from "react";
-import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { Button, Form, Input, message } from "antd";
 import {
@@ -10,15 +9,13 @@ import {
 } from "@ant-design/icons";
 
 import { RegisterValuesInterface } from "../../types/auth.types/register.values.interface";
+import axiosInstance from "../../api/axiosInstance";
 
 const validateMessages = {
   required: "${label} is required!",
   types: {
     email: "${label} is not a valid email!",
     number: "${label} is not a valid number!",
-  },
-  number: {
-    range: "${label} must be between ${min} and ${max}",
   },
 };
 
@@ -57,14 +54,11 @@ const Register: React.FC = () => {
   const handleSubmit = async (values: RegisterValuesInterface) => {
     try {
       // Send a POST request to the backend
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/register",
-        {
-          email: values.email,
-          name: values.name,
-          password: values.password,
-        }
-      );
+      const response = await axiosInstance.post("/auth/register", {
+        email: values.email,
+        name: values.name,
+        password: values.password,
+      });
 
       // Handle success
       message.success(response.data.message || "Registered successfully!");

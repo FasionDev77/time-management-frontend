@@ -11,7 +11,7 @@ function App() {
         <Routes>
           <Route path="/register" element={<Register />} />
           <Route path="/" element={<Login />} />
-          <Route path="/dashboard" Component={Landing}/>
+          <Route path="/dashboard/*" element={<Landing />} />
           <Route path="*" element={<div>404 Not Found</div>} />
         </Routes>
       </Router>

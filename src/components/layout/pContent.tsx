@@ -1,19 +1,13 @@
 import React from "react";
-import { Layout, Button, Table } from "antd";
+import { Button, Table } from "antd";
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 
 import HandleRecord from "./handleRecord";
 
-const { Content } = Layout;
-
 const PContent: React.FC = () => {
   return (
-    <Content
-      className="content-section"
-      style={{ margin: "16px", backgroundColor: "#fff", padding: "16px" }}
-    >
+    <>
       <HandleRecord />
-      {/* Table */}
       <Table
         bordered
         dataSource={[
@@ -52,7 +46,7 @@ const PContent: React.FC = () => {
           },
         ]}
       />
-    </Content>
+    </>
   );
 };
 

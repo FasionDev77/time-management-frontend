@@ -1,10 +1,22 @@
 import React, { useState } from "react";
-import { DatePicker, Button, Modal, Form, Input } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
+import { PlusOutlined } from "@ant-design/icons";
+import {
+  DatePicker,
+  Button,
+  Modal,
+  Form,
+  Input,
+  InputNumber,
+  message,
+} from "antd";
+
+import axiosInstance from "../../api/axiosInstance";
+
 import type { Dayjs } from "dayjs";
 
 import type { TimeRangePickerProps } from "antd";
+import { RecordValuesInterface } from "../../types/record.values.interface";
 
 const { RangePicker } = DatePicker;
 
@@ -17,73 +29,108 @@ const rangePresets: TimeRangePickerProps["presets"] = [
 
 const HandleRecord: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [form] = Form.useForm();
 
-  const onRangeChange = (
+  const onRangeChange = async (
     dates: null | (Dayjs | null)[],
     dateStrings: string[]
   ) => {
     if (dates) {
-      console.log("From: ", dates[0], ", to: ", dates[1]);
-      console.log("From: ", dateStrings[0], ", to: ", dateStrings[1]);
+      try {
+        const records = await axiosInstance.get("/records", {
+          params: {
+            startDate: dateStrings[0],
+            endDate: dateStrings[1],
+          },
+        });
+        console.log(records);
+      } catch {
+        message.error("Error fetching records");
+      }
     } else {
       console.log("Clear");
     }
   };
 
-  const handleCreate = () => {
-    setIsModalOpen(true);
+  const handleCreate = async (values: RecordValuesInterface) => {
+    try {
+      console.log(values);
+      const payload = {
+        description: values.description,
+        date: values.date.format("YYYY-MM-DD"),
+        duration: values.duration,
+      };
+
+      const response = await axiosInstance.post("/records", payload);
+      message.success(response.data.message || "Record created successfully");
+      setIsModalOpen(false);
+      form.resetFields();
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        message.error(
+          (error as Error & { response?: { data?: { message?: string } } })
+            .response?.data?.message || "Error creating record"
+        );
+      } else {
+        message.error("An unknown error occurred");
+      }
+    }
+  };
+
+  const handleModalOk = () => {
+    form.submit();
   };
 
   return (
     <div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          marginBottom: "16px",
-        }}
-      >
+      <div className="item-display-center mb-16">
         <RangePicker presets={rangePresets} onChange={onRangeChange} />
-        <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={() => setIsModalOpen(true)}
+        >
           Create
         </Button>
         <Modal
           title="Add Record"
           open={isModalOpen}
-          onOk={() => setIsModalOpen(false)}
+          onOk={handleModalOk}
           onCancel={() => setIsModalOpen(false)}
         >
           <Form
+            form={form}
             name="record-form"
             labelCol={{ span: 5 }}
             wrapperCol={{ span: 17 }}
             autoComplete="off"
+            onFinish={handleCreate}
+            initialValues={{
+              date: dayjs(), // Default date as current date
+              duration: 1, // Default duration
+            }}
           >
-            <Form.Item
-              label="Date"
-              name="date"
-              rules={[{ required: true }]}
-            >
-              <Input />
+            <Form.Item label="Date" name="date">
+              <DatePicker />
             </Form.Item>
 
             <Form.Item
               label="Description"
               name="description"
+              rules={[{ required: true, message: "Description is required" }]}
             >
               <Input />
             </Form.Item>
             <Form.Item
               label="Hour(s)"
-              name="hours"
+              name="duration"
               rules={[{ required: true }]}
             >
-              <Input />
+              <InputNumber min={0} max={12} />
             </Form.Item>
           </Form>
         </Modal>
       </div>
     </div>
   );
-};
-export default HandleRecord;
+};export default HandleRecord;

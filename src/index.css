@@ -57,3 +57,21 @@ body {
 .mt-10{
   margin-top: 10px;
 }
+.item-display-center{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.mb-16{
+  margin-bottom: 16px;
+}
+.mp-16{
+  margin: 16px;
+  padding: 16px;
+}
+.mr-7{
+  margin-right: 7px;
+}
+.bg-fff{
+  background-color: #fff;
+}

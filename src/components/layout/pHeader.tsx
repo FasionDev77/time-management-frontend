@@ -1,26 +1,79 @@
-import React from 'react';
-import { Layout, Typography, Avatar } from 'antd';
-import { UserOutlined } from '@ant-design/icons';
+import React from "react";
+import { Layout, Avatar, Dropdown, Typography } from "antd";
+import {
+  UserOutlined,
+  DashboardOutlined,
+  CalendarOutlined,
+  LogoutOutlined,
+} from "@ant-design/icons";
 
-import { useAppContext } from '../../context/App.Context';
+import type { MenuProps } from "antd";
 
-const {Header} = Layout
+import { useAppContext } from "../../context/App.Context";
+import { Link, useNavigate } from "react-router-dom";
+
+const { Header } = Layout;
 
 const PHeader: React.FC = () => {
-  const { userInfo } = useAppContext();
+  const navigate = useNavigate();
+  const { userInfo, logout } = useAppContext();
 
-    return (
-        <Header
-          className='header bg-fff item-display-center'
-        >
-          <Typography.Title level={4} className="form-title">
-            Time Management System
-          </Typography.Title>
-          <div>
-            <Avatar icon={<UserOutlined />} className='mr-7' />
-            <Typography.Text>{userInfo?.email}</Typography.Text>
-          </div>
-        </Header>
-    );
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
+
+  const items: MenuProps["items"] = [
+    {
+      key: "1",
+      label: (
+        <Link to="/dashboard">
+          <span>Everyday</span>
+        </Link>
+      ),
+      icon: <CalendarOutlined />,
+    },
+    {
+      key: "2",
+      label: (
+        <Link to="/dashboard">
+          <span>Dashboard</span>
+        </Link>
+      ),
+      icon: <DashboardOutlined />,
+    },
+    {
+      key: "3",
+      label: (
+        <Link to="/dashboard/profile">
+          <span>My Profile</span>
+        </Link>
+      ),
+      icon: <UserOutlined />,
+    },
+    {
+      key: "4",
+      label: (
+        <span className="color-red" onClick={handleLogout}>
+          Log out
+        </span>
+      ),
+      icon: <LogoutOutlined className="color-red" />,
+    },
+  ];
+
+  return (
+    <Header className="header bg-fff item-display-center">
+      <Typography.Title level={4} className="form-title">
+        Time Management System
+      </Typography.Title>
+      <div>
+        <Dropdown placement="bottomLeft" menu={{ items }} arrow>
+          <Avatar icon={<UserOutlined />} className="mr-7" />
+        </Dropdown>
+        <Typography.Text>{userInfo?.name}</Typography.Text>
+      </div>
+    </Header>
+  );
 };
 export default PHeader;

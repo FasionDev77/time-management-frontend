@@ -22,14 +22,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   const [authToken, setAuthTokenState] = useState<string | null>(null);
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
 
-  // Function to set token and decode user info
   const setAuthToken = (token: string | null) => {
     setAuthTokenState(token);
     if (token) {
       localStorage.setItem("authToken", token);
       try {
         const decoded: UserInfo = jwtDecode<UserInfo>(token);
-        setUserInfo(decoded); // Store decoded user info
+        setUserInfo(decoded);
       } catch (error) {
         console.error("Invalid token:", error);
         setUserInfo(null);
@@ -41,8 +40,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const logout = () => {
-    // Clear token and user info from local storage and state
     localStorage.removeItem("token");
+    
     setAuthToken(null);
     setUserInfo(null);
   };

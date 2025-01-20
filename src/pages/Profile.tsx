@@ -1,195 +1,180 @@
 import React, { useState } from "react";
-import { Form, Input, InputNumber, Popconfirm, Table, Typography, message } from "antd";
-
+import {
+  Form,
+  Input,
+  Button,
+  Row,
+  Col,
+  Card,
+  Typography,
+  Avatar,
+  message,
+} from "antd";
+import { UserOutlined, MailOutlined } from "@ant-design/icons";
 import { useAppContext } from "../context/App.Context";
 import axiosInstance from "../api/axiosInstance";
 
-interface DataType {
-  key: string;
-  name: string;
-  email: string;
-  preferedHours: number;
-}
-
-const EditableCell: React.FC<{
-  editing: boolean;
-  dataIndex: string;
-  title: string;
-  inputType: "number" | "text";
-  record: DataType;
-  children: React.ReactNode;
-}> = ({ editing, dataIndex, title, inputType, children, ...restProps }) => {
-  const inputNode = inputType === "number" ? <InputNumber /> : <Input />;
-  return (
-    <td {...restProps}>
-      {editing ? (
-        <Form.Item
-          name={dataIndex}
-          style={{ margin: 0 }}
-          rules={[
-            {
-              required: true,
-              message: `Please Input ${title}!`,
-            },
-            ...(dataIndex === "email"
-              ? [
-                  {
-                    type: "email" as const,
-                    message: "Please enter a valid email!",
-                  },
-                ]
-              : []),
-          ]}
-        >
-          {inputNode}
-        </Form.Item>
-      ) : (
-        children
-      )}
-    </td>
-  );
-};
-
-const Profile: React.FC = () => {
+const Profile = () => {
   const [form] = Form.useForm();
   const { userInfo } = useAppContext();
+  const [isDisabled, setIsDisabled] = useState(true);
 
-  const originData: DataType[] = [
-    {
-      key: "1",
-      name: `${userInfo?.name}`,
-      email: `${userInfo?.email}`,
-      preferedHours: Number(userInfo?.preferedHours) || 8,
-    },
-  ];
+  const handleEdit = () => setIsDisabled(false);
+  const handleCancel = () => setIsDisabled(true);
 
-  const [data, setData] = useState<DataType[]>(originData);
-  const [editingKey, setEditingKey] = useState<string>("");
-
-  const isEditing = (record: DataType) => record.key === editingKey;
-
-  const edit = (record: Partial<DataType> & { key: React.Key }) => {
-    form.setFieldsValue({
-      name: "",
-      email: "",
-      preferedHours: "",
-      description: "",
-      ...record,
-    });
-    setEditingKey(record.key as string);
-  };
-
-  const cancel = () => {
-    setEditingKey("");
-  };
-
-  const save = async (key: React.Key) => {
+  const handleSave = async (values: {
+    name: string;
+    email: string;
+    preferedHours: number;
+  }) => {
+    console.log(values);
     try {
-      const row = (await form.validateFields()) as DataType;
-      const newData = [...data];
-      const index = newData.findIndex((item) => key === item.key);
-      if (index > -1) {
-        const updatedUser = {
-          email: row.email,
-          name: row.name,
-          preferedHours: row.preferedHours,
-        };
-        console.log("updatedUser", updatedUser, userInfo?.id);
-        const response = await axiosInstance.put(
-          `/users/${userInfo?.id}`,
-          updatedUser
-        );
-        message.success("Profile updated successfully");
-        const item = { ...newData[index], ...updatedUser };
-        newData.splice(index, 1, item);
-        setData(newData);
-        console.log("response", response);
-        setEditingKey("");
+      await axiosInstance.put(`/users/${userInfo?.id}`, values);
+      message.success("Profile updated successfully!");
+      setIsDisabled(true);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        message.error(`Failed to update profile: ${error.message}`);
+      } else {
+        message.error("Failed to update profile.");
       }
-    } catch (errInfo) {
-      console.log("Validate Failed:", errInfo);
     }
   };
-
-  const columns = [
-    {
-      title: "Name",
-      dataIndex: "name",
-      editable: true,
-      inputType: "text",
-    },
-    {
-      title: "Email",
-      dataIndex: "email",
-      editable: true,
-      inputType: "text",
-    },
-    {
-      title: "Prefered working hours",
-      dataIndex: "preferedHours",
-      editable: true,
-      inputType: "number", // Restrict input to numbers
-    },
-    {
-      title: "Operation",
-      dataIndex: "operation",
-      render: (_: unknown, record: DataType) => {
-        const editable = isEditing(record);
-        return editable ? (
-          <span>
-            <Typography.Link
-              onClick={() => save(record.key)}
-              style={{ marginRight: 8 }}
-            >
-              Save
-            </Typography.Link>
-            <Popconfirm title="Sure to cancel?" onConfirm={cancel}>
-              <Typography.Link>Cancel</Typography.Link>
-            </Popconfirm>
-          </span>
-        ) : (
-          <Typography.Link
-            disabled={editingKey !== ""}
-            onClick={() => edit(record)}
-          >
-            Edit
-          </Typography.Link>
-        );
-      },
-    },
-  ];
-
-  const mergedColumns = columns.map((col) => {
-    if (!col.editable) {
-      return col;
-    }
-    return {
-      ...col,
-      onCell: (record: DataType) => ({
-        record,
-        inputType: col.inputType,
-        dataIndex: col.dataIndex,
-        title: col.title,
-        editing: isEditing(record),
-      }),
-    };
-  });
-
   return (
-    <Form form={form} component={false}>
-      <Table
-        components={{
-          body: {
-            cell: EditableCell,
-          },
-        }}
-        bordered
-        dataSource={data}
-        columns={mergedColumns}
-        rowClassName="editable-row"
-        pagination={false} // Single row does not need pagination
-      />
-    </Form>
+    <div
+      style={{
+        padding: "50px",
+      }}
+    >
+      <Row justify="center" align="middle">
+        <Col xs={24} sm={20} md={12} lg={8}>
+          <Card
+            style={{
+              borderRadius: 20,
+              boxShadow: "0 8px 20px rgba(0, 0, 0, 0.1)",
+              padding: "30px",
+              textAlign: "center",
+              border: "1px solid #e3f2fd",
+            }}
+          >
+            <div style={{ marginBottom: 20 }}>
+              <Avatar size={100} icon={<UserOutlined />} />
+              <Typography.Title
+                level={3}
+                style={{
+                  margin: "15px 0",
+                  fontWeight: "bold",
+                  background: "linear-gradient(to bottom, #42a5f5, #7986cb)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                }}
+              >
+                Vidal Connelly
+              </Typography.Title>
+            </div>
+            <Form
+              form={form}
+              layout="vertical"
+              initialValues={{
+                name: "Vidal Connelly",
+                email: "vidalconnelly37@gmail.com",
+                preferedHours: 8,
+              }}
+              onFinish={handleSave}
+            >
+              <Form.Item
+                label="Name"
+                name="name"
+                rules={[{ required: true, message: "Please enter your name" }]}
+              >
+                <Input
+                  disabled={isDisabled}
+                  prefix={<UserOutlined />}
+                  style={{
+                    borderRadius: 10,
+                    border: "1px solid #bbdefb",
+                  }}
+                />
+              </Form.Item>
+              <Form.Item
+                label="Email"
+                name="email"
+                rules={[
+                  {
+                    required: true,
+                    type: "email",
+                    message: "Please enter a valid email",
+                  },
+                ]}
+              >
+                <Input
+                  disabled={isDisabled}
+                  prefix={<MailOutlined />}
+                  style={{
+                    borderRadius: 10,
+                    border: "1px solid #bbdefb",
+                  }}
+                />
+              </Form.Item>
+              <Form.Item
+                label="Preferred Working hours"
+                name="preferedHours"
+                rules={[
+                  { required: true, message: "Please enter working hours" },
+                ]}
+              >
+                <Input
+                  disabled={isDisabled}
+                  type="number"
+                  style={{
+                    borderRadius: 10,
+                    border: "1px solid #bbdefb",
+                  }}
+                />
+              </Form.Item>
+              <div style={{ textAlign: "center", marginTop: 20 }}>
+                {isDisabled ? (
+                  <Button
+                    onClick={handleEdit}
+                    style={{
+                      borderRadius: 20,
+                      color: "#42a5f5",
+                      border: "1px solid #bbdefb",
+                    }}
+                  >
+                    Edit Profile
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      type="primary"
+                      htmlType="submit"
+                      style={{
+                        marginRight: 10,
+                        borderRadius: 20,
+                        border: "none",
+                      }}
+                    >
+                      Save
+                    </Button>
+                    <Button
+                      onClick={handleCancel}
+                      style={{
+                        borderRadius: 20,
+                        border: "1px solid #e0e0e0",
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </>
+                )}
+              </div>
+            </Form>
+          </Card>
+        </Col>
+      </Row>
+    </div>
   );
 };
+
 export default Profile;

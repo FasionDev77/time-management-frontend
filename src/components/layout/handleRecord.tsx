@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import dayjs from "dayjs";
 import { PlusOutlined } from "@ant-design/icons";
 import { DatePicker, Button, Form, Input, InputNumber, message } from "antd";
@@ -21,6 +21,22 @@ const rangePresets: TimeRangePickerProps["presets"] = [
 
 const HandleRecord: React.FC = () => {
   const [form] = Form.useForm();
+  const defaultRange: [Dayjs, Dayjs] = [dayjs(), dayjs()];
+  const today = dayjs().format("YYYY-MM-DD");
+
+  useEffect(() => {
+    const fetchRecords = async () => {
+      try {
+        const result = await axiosInstance.get(
+          `/records/?from=${today}&to=${today}`
+        );
+        console.log(result.data);
+      } catch (error) {
+        console.error("Error fetching records:", error);
+      }
+    };
+    fetchRecords();
+  }, []);
 
   const onRangeChange = async (
     dates: null | (Dayjs | null)[],
@@ -28,12 +44,10 @@ const HandleRecord: React.FC = () => {
   ) => {
     if (dates) {
       try {
-        const records = await axiosInstance.get("/records", {
-          params: {
-            startDate: dateStrings[0],
-            endDate: dateStrings[1],
-          },
-        });
+        const records = await axiosInstance.get(
+          `/records/?from=${dateStrings[0]}&to=${dateStrings[1]}`,
+          {}
+        );
         console.log(records);
       } catch {
         message.error("Error fetching records");
@@ -45,7 +59,6 @@ const HandleRecord: React.FC = () => {
 
   const handleCreate = async (values: RecordValuesInterface) => {
     try {
-      console.log(values);
       const payload = {
         description: values.description,
         date: values.date.format("YYYY-MM-DD"),
@@ -54,12 +67,12 @@ const HandleRecord: React.FC = () => {
 
       const response = await axiosInstance.post("/records", payload);
       form.resetFields();
-      message.success(response.data.message || "Record created successfully");
+      message.success(response.data.message);
     } catch (error: unknown) {
       if (error instanceof Error) {
         message.error(
           (error as Error & { response?: { data?: { message?: string } } })
-            .response?.data?.message || "Error creating record"
+            .response?.data?.message
         );
       } else {
         message.error("An unknown error occurred");
@@ -70,9 +83,16 @@ const HandleRecord: React.FC = () => {
   return (
     <div>
       <div className="item-display-center mb-16">
-        <RangePicker presets={rangePresets} onChange={onRangeChange} />
+        <div>
+          <span>Filter by date : </span>
+          <RangePicker
+            presets={rangePresets}
+            defaultValue={defaultRange}
+            onChange={onRangeChange}
+          />
+        </div>
         <Form
-        form={form}
+          form={form}
           layout="inline"
           variant="filled"
           name="record-form"
@@ -91,7 +111,7 @@ const HandleRecord: React.FC = () => {
           <Form.Item
             label="Description"
             name="description"
-            style={{width: 700}}
+            style={{ width: 700 }}
             rules={[{ required: true, message: "Description is required" }]}
           >
             <Input />
@@ -105,7 +125,7 @@ const HandleRecord: React.FC = () => {
           </Form.Item>
           <Form.Item>
             <Button type="primary" icon={<PlusOutlined />} htmlType="submit">
-              Create
+              Add Record
             </Button>
           </Form.Item>
         </Form>
@@ -113,5 +133,4 @@ const HandleRecord: React.FC = () => {
     </div>
   );
 };
-
 export default HandleRecord;

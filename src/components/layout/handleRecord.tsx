@@ -36,7 +36,7 @@ const HandleRecord: React.FC = () => {
       }
     };
     fetchRecords();
-  }, []);
+  }, [today]);
 
   const onRangeChange = async (
     dates: null | (Dayjs | null)[],

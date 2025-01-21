@@ -7,6 +7,7 @@ import PHeader from "../components/layout/pHeader";
 import PContent from "../components/layout/pContent";
 import PFooter from "../components/layout/pFooter";
 import Profile from "./Profile";
+import UserTable from "./Users";
 
 const LandingPage = () => {
   return (
@@ -18,6 +19,8 @@ const LandingPage = () => {
           <Routes>
             <Route path="" element={<PContent />} />
             <Route path="profile" element={<Profile />} />
+            <Route path="admin" element={<UserTable />} />
+            <Route path="user-management" element={<UserTable />} />
           </Routes>
         </Content>
         <PFooter />

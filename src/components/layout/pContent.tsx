@@ -6,73 +6,19 @@ import {
   SaveOutlined,
   CloseOutlined,
 } from "@ant-design/icons";
-import {
-  Button,
-  Form,
-  Input,
-  InputNumber,
-  Popconfirm,
-  Table,
-  Typography,
-  message,
-  DatePicker,
-} from "antd";
+import { Button, Form, Table, Typography, message, DatePicker } from "antd";
 
 // import { useAppContext } from "../../context/App.Context";
-import axiosInstance from "../../api/axiosInstance";
+import axiosInstance from "../../utils/axiosInstance";
 import HandleRecord from "./handleRecord";
-
-interface DataType {
-  key: string;
-  _id: string;
-  date: string;
-  description: string;
-  duration: number;
-}
-
-const EditableCell: React.FC<{
-  editing: boolean;
-  dataIndex: string;
-  title: string;
-  inputType: "number" | "text";
-  record: DataType;
-  children: React.ReactNode;
-}> = ({ editing, dataIndex, title, inputType, children, ...restProps }) => {
-  const inputNode = inputType === "number" ? <InputNumber /> : <Input />;
-  return (
-    <td {...restProps}>
-      {editing ? (
-        <Form.Item
-          name={dataIndex}
-          style={{ margin: 0 }}
-          rules={[
-            {
-              required: true,
-              message: `Please Input ${title}!`,
-            },
-            ...(dataIndex === "email"
-              ? [
-                  {
-                    type: "email" as const,
-                    message: "Please enter a valid email!",
-                  },
-                ]
-              : []),
-          ]}
-        >
-          {inputNode}
-        </Form.Item>
-      ) : (
-        children
-      )}
-    </td>
-  );
-};
+import EditableCell from "../editableCells";
+import { RecordDataInterface } from "../../types/record.data.interface";
 
 const RecordTable: React.FC = () => {
   const [form] = Form.useForm();
+  // const [rangeRecords, setRangeRecords] = useState<RecordDataInterface[]>([]);
   // const { userInfo } = useAppContext();
-  const [records, setRecords] = useState<DataType[]>([]);
+  const [records, setRecords] = useState<RecordDataInterface[]>([]);
   const today = dayjs().format("YYYY-MM-DD");
 
   useEffect(() => {
@@ -87,7 +33,7 @@ const RecordTable: React.FC = () => {
       }
     };
     fetchRecords();
-  }, []);
+  }, [today]);
 
   const originData = records.map((record, index) => ({
     key: index.toString(),
@@ -97,12 +43,12 @@ const RecordTable: React.FC = () => {
     description: record.description || "",
   }));
 
-  const [data, setData] = useState<DataType[]>(originData);
+  const [data, setData] = useState<RecordDataInterface[]>(originData);
   const [editingKey, setEditingKey] = useState<string>("");
 
-  const isEditing = (record: DataType) => record.key === editingKey;
+  const isEditing = (record: RecordDataInterface) => record.key === editingKey;
 
-  const edit = (record: Partial<DataType> & { key: React.Key }) => {
+  const edit = (record: Partial<RecordDataInterface> & { key: React.Key }) => {
     form.setFieldsValue({
       date: record.date ? dayjs(record.date, "YYYY-MM-DD") : null,
       description: "",
@@ -112,55 +58,35 @@ const RecordTable: React.FC = () => {
     setEditingKey(record.key as string);
   };
 
-  const cancel = () => {
-    setEditingKey("");
-  };
   const save = async (key: React.Key) => {
     try {
-      const row = (await form.validateFields()) as DataType;
+      const row = (await form.validateFields()) as RecordDataInterface;
       const newData = [...records];
       const index = newData.findIndex((item, idx) => Number(key) === idx);
       if (index > -1) {
         const updatedRecord = { ...newData[index], ...row };
-        // Update in the backend
         const response = await axiosInstance.put(
           `/records/${updatedRecord._id}`,
           updatedRecord
         );
-        if (response.status === 200) {
-          newData[index] = updatedRecord;
-          setData(newData);
-          setEditingKey("");
-          message.success("Record updated successfully");
-        } else {
-          console.error("Failed to update record:", response.data);
-        }
+        newData[index] = updatedRecord;
+        setData(newData);
+        setEditingKey("");
+        message.success("Record updated successfully");
       }
     } catch (errInfo) {
       console.log("Validate Failed:", errInfo);
     }
   };
 
-  const handleRemove = async (key: React.Key) => {
+  const handleDelete = async (id: string) => {
     try {
-      const row = (await form.validateFields()) as DataType;
-      const newData = [...records];
-      const index = newData.findIndex((item, idx) => Number(key) === idx);
-      const updatedRecord = { ...newData[index], ...row };
-      console.log(updatedRecord, "updatedRecord");
-      const response = await axiosInstance.delete(
-        `/records/${updatedRecord._id}`
-      );
-      if (response.status === 200) {
-        newData.splice(index, 1);
-        setData(newData);
-        setEditingKey("");
-        message.success("Record deleted successfully");
-      } else {
-        console.error("Failed to update record:", response.data);
-      }
-    } catch (errInfo) {
-      console.log("Validate Failed:", errInfo);
+      await axiosInstance.delete(`/records/${id}`);
+      const updatedData = data.filter((item) => item._id !== id);
+      setData(updatedData);
+      message.success("Record deleted successfully");
+    } catch (error) {
+      console.error("Error deleting record:", error);
     }
   };
 
@@ -171,7 +97,7 @@ const RecordTable: React.FC = () => {
       key: "date",
       editable: true,
       inputType: "date",
-      render: (_: unknown, record: DataType) =>
+      render: (_: unknown, record: RecordDataInterface) =>
         isEditing(record) ? (
           <Form.Item
             name="date"
@@ -201,7 +127,7 @@ const RecordTable: React.FC = () => {
     {
       title: "Operation",
       dataIndex: "operation",
-      render: (_: unknown, record: DataType) => {
+      render: (_: unknown, record: RecordDataInterface) => {
         const editable = isEditing(record);
         return editable ? (
           <span>
@@ -210,9 +136,7 @@ const RecordTable: React.FC = () => {
               onClick={() => save(record.key)}
               icon={<SaveOutlined />}
             />
-            <Popconfirm title="Sure to cancel?" onConfirm={cancel}>
-              <Button type="link" icon={<CloseOutlined />} />
-            </Popconfirm>
+            <Button type="link" icon={<CloseOutlined />} />
           </span>
         ) : (
           <>
@@ -227,7 +151,7 @@ const RecordTable: React.FC = () => {
                 type="link"
                 danger
                 icon={<DeleteOutlined />}
-                onClick={() => handleRemove(record.key)}
+                onClick={() => handleDelete(record._id)}
               ></Button>
             </Typography.Link>
           </>
@@ -242,7 +166,7 @@ const RecordTable: React.FC = () => {
     }
     return {
       ...col,
-      onCell: (record: DataType) => ({
+      onCell: (record: RecordDataInterface) => ({
         record,
         inputType: col.inputType,
         dataIndex: col.dataIndex,

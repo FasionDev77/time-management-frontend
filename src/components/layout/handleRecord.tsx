@@ -3,7 +3,7 @@ import dayjs from "dayjs";
 import { PlusOutlined } from "@ant-design/icons";
 import { DatePicker, Button, Form, Input, InputNumber, message } from "antd";
 
-import axiosInstance from "../../api/axiosInstance";
+import axiosInstance from "../../utils/axiosInstance";
 
 import type { Dayjs } from "dayjs";
 
@@ -84,11 +84,19 @@ const HandleRecord: React.FC = () => {
     <div>
       <div className="item-display-center mb-16">
         <div>
-          <span>Filter by date : </span>
+          <span>Filter by range : </span>
           <RangePicker
             presets={rangePresets}
             defaultValue={defaultRange}
             onChange={onRangeChange}
+          />
+        </div>
+        <div>
+          <span>Filter by date : </span>
+          <DatePicker
+            // presets={rangePresets}
+            defaultValue={dayjs()}
+            // onChange={onRangeChange}
           />
         </div>
         <Form
@@ -111,7 +119,7 @@ const HandleRecord: React.FC = () => {
           <Form.Item
             label="Description"
             name="description"
-            style={{ width: 700 }}
+            style={{ width: 500 }}
             rules={[{ required: true, message: "Description is required" }]}
           >
             <Input />

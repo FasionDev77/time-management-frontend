@@ -12,7 +12,7 @@ import {
 } from "antd";
 import { UserOutlined, MailOutlined } from "@ant-design/icons";
 import { useAppContext } from "../context/App.Context";
-import axiosInstance from "../api/axiosInstance";
+import axiosInstance from "../utils/axiosInstance";
 
 const Profile = () => {
   const [form] = Form.useForm();
@@ -27,7 +27,6 @@ const Profile = () => {
     email: string;
     preferedHours: number;
   }) => {
-    console.log(values);
     try {
       await axiosInstance.put(`/users/${userInfo?.id}`, values);
       message.success("Profile updated successfully!");
@@ -69,16 +68,16 @@ const Profile = () => {
                   WebkitTextFillColor: "transparent",
                 }}
               >
-                Vidal Connelly
+                {userInfo?.name}
               </Typography.Title>
             </div>
             <Form
               form={form}
               layout="vertical"
               initialValues={{
-                name: "Vidal Connelly",
-                email: "vidalconnelly37@gmail.com",
-                preferedHours: 8,
+                name: `${userInfo?.name}`,
+                email: `${userInfo?.email}`,
+                preferedHours: userInfo?.preferedHours,
               }}
               onFinish={handleSave}
             >
@@ -117,7 +116,7 @@ const Profile = () => {
                 />
               </Form.Item>
               <Form.Item
-                label="Preferred Working hours"
+                label="Prefered Working hours"
                 name="preferedHours"
                 rules={[
                   { required: true, message: "Please enter working hours" },

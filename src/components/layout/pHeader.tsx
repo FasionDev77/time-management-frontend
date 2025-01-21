@@ -3,7 +3,6 @@ import { Layout, Avatar, Dropdown, Typography } from "antd";
 import {
   UserOutlined,
   DashboardOutlined,
-  CalendarOutlined,
   LogoutOutlined,
 } from "@ant-design/icons";
 
@@ -24,15 +23,25 @@ const PHeader: React.FC = () => {
   };
 
   const items: MenuProps["items"] = [
-    {
-      key: "1",
-      label: (
-        <Link to="/dashboard">
-          <span>Everyday</span>
-        </Link>
-      ),
-      icon: <CalendarOutlined />,
-    },
+    ...(userInfo?.role === "admin" || userInfo?.role === "user_manager"
+      ? [
+          {
+            key: "1",
+            label: (
+              <Link
+                to={
+                  userInfo.role === "admin"
+                    ? "/dashboard/admin"
+                    : "/dashboard/user-management"
+                }
+              >
+                <span>Users</span>
+              </Link>
+            ),
+            icon: <UserOutlined />,
+          },
+        ]
+      : []),
     {
       key: "2",
       label: (
@@ -64,7 +73,7 @@ const PHeader: React.FC = () => {
 
   return (
     <Header className="header bg-fff item-display-center">
-      <Typography.Title level={4} className="form-title">
+      <Typography.Title level={4} className="form-title cursor-pointer">
         Time Management System
       </Typography.Title>
       <div>

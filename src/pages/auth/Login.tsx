@@ -1,11 +1,12 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
 import { Button, Form, Input, message } from "antd";
 import { MailOutlined, LockOutlined } from "@ant-design/icons";
 
 import type { FormProps } from "antd";
 
-import axiosInstance from "../../api/axiosInstance";
+import axiosInstance from "../../utils/axiosInstance";
 import { useAppContext } from "../../context/App.Context";
 
 type FieldType = {
@@ -34,8 +35,22 @@ const App: React.FC = () => {
       const { token } = response.data;
       setAuthToken(token);
       localStorage.setItem("authToken", token);
-      navigate("/dashboard");
-      message.success("Login successful!");
+      const decodedUser: { role: string } = jwtDecode(token);
+      // Redirect based on user role
+      const rolePaths: { [key: string]: string } = {
+        user: "/dashboard",
+        user_manager: "/dashboard/user-management",
+        admin: "/dashboard/admin",
+      };
+
+      // Redirect based on user role
+      const path = rolePaths[decodedUser.role];
+      if (path) {
+        navigate(path);
+        message.success("Login successful!");
+      } else {
+        message.error("Invalid role detected. Contact support.");
+      }
     } catch (error) {
       const errorMessage =
         (error as { response?: { data?: { message?: string } } })?.response

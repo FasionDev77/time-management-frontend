@@ -9,7 +9,7 @@ import {
 } from "@ant-design/icons";
 
 import { RegisterValuesInterface } from "../../types/auth.types/register.values.interface";
-import axiosInstance from "../../api/axiosInstance";
+import axiosInstance from "../../utils/axiosInstance";
 
 const validateMessages = {
   required: "${label} is required!",

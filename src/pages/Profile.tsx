@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Form,
   Input,
@@ -58,18 +58,7 @@ const Profile = () => {
           >
             <div style={{ marginBottom: 20 }}>
               <Avatar size={100} icon={<UserOutlined />} />
-              <Typography.Title
-                level={3}
-                style={{
-                  margin: "15px 0",
-                  fontWeight: "bold",
-                  background: "linear-gradient(to bottom, #42a5f5, #7986cb)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                }}
-              >
-                {userInfo?.name}
-              </Typography.Title>
+              <Typography.Title level={3}>{userInfo?.name}</Typography.Title>
             </div>
             <Form
               form={form}

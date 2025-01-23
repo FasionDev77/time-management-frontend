@@ -8,6 +8,7 @@ import axiosInstance from "../../utils/axiosInstance";
 import type { Dayjs } from "dayjs";
 
 import type { TimeRangePickerProps } from "antd";
+import type { DatePickerProps } from "antd";
 import { RecordValuesInterface } from "../../types/record.values.interface";
 
 const { RangePicker } = DatePicker;
@@ -28,7 +29,7 @@ const HandleRecord: React.FC = () => {
     const fetchRecords = async () => {
       try {
         const result = await axiosInstance.get(
-          `/records/?from=${today}&to=${today}`
+          `/records/filter/?from=${today}&to=${today}`
         );
         console.log(result.data);
       } catch (error) {
@@ -45,10 +46,13 @@ const HandleRecord: React.FC = () => {
     if (dates) {
       try {
         const records = await axiosInstance.get(
-          `/records/?from=${dateStrings[0]}&to=${dateStrings[1]}`,
-          {}
+          `/records/?from=${dateStrings[0]}&to=${dateStrings[1]}`
         );
-        console.log(records);
+        if (records.data.length > 0) {
+          console.log(records.data);
+        } else {
+          message.info("No records found for the selected date range.");
+        }
       } catch {
         message.error("Error fetching records");
       }
@@ -80,6 +84,22 @@ const HandleRecord: React.FC = () => {
     }
   };
 
+  const searchDate: DatePickerProps["onChange"] = async (date, dateString) => {
+    if (date) {
+      try {
+        const records = await axiosInstance.get(
+          `/records/?from=${dateString}&to=${dateString}`,
+          {}
+        );
+        console.log(records);
+      } catch {
+        message.error("Error fetching records");
+      }
+    } else {
+      console.log("Clear");
+    }
+  };
+
   return (
     <div>
       <div className="item-display-center mb-16">
@@ -93,11 +113,7 @@ const HandleRecord: React.FC = () => {
         </div>
         <div>
           <span>Filter by date : </span>
-          <DatePicker
-            // presets={rangePresets}
-            defaultValue={dayjs()}
-            // onChange={onRangeChange}
-          />
+          <DatePicker defaultValue={dayjs()} onChange={searchDate} />
         </div>
         <Form
           form={form}

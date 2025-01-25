@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { jwtDecode } from "jwt-decode";
+import { RecordDataInterface } from "../types/record.data.interface";
 
 interface UserInfo {
   id: string;
@@ -9,7 +10,11 @@ interface UserInfo {
 }
 interface AppContextProps {
   authToken: string | null;
+  userRecords: RecordDataInterface[];
+  setUserRecords: React.Dispatch<React.SetStateAction<RecordDataInterface[]>>;
   userInfo: UserInfo | null;
+  setUserInfo: React.Dispatch<React.SetStateAction<UserInfo | null>>;
+  isAuthenticated: boolean;
   setAuthToken: (token: string | null) => void;
   logout: () => void;
 }
@@ -21,11 +26,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [authToken, setAuthTokenState] = useState<string | null>(null);
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [userRecords, setUserRecords] = useState<RecordDataInterface[]>([]);
 
   const setAuthToken = (token: string | null) => {
     setAuthTokenState(token);
     if (token) {
       localStorage.setItem("authToken", token);
+      setIsAuthenticated(true);
       try {
         const decoded: UserInfo = jwtDecode<UserInfo>(token);
         setUserInfo(decoded);
@@ -41,7 +49,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const logout = () => {
     localStorage.removeItem("token");
-    
     setAuthToken(null);
     setUserInfo(null);
   };
@@ -51,11 +58,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     const savedToken = localStorage.getItem("authToken");
     if (savedToken) {
       setAuthToken(savedToken);
+      setIsAuthenticated(true);
     }
   }, []);
 
   return (
-    <AppContext.Provider value={{ authToken, userInfo, setAuthToken, logout }}>
+    <AppContext.Provider
+      value={{
+        authToken,
+        userInfo,
+        setUserInfo,
+        setAuthToken,
+        logout,
+        isAuthenticated,
+        userRecords,
+        setUserRecords,
+      }}
+    >
       {children}
     </AppContext.Provider>
   );

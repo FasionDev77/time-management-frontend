@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import dayjs from "dayjs";
-import { PlusOutlined } from "@ant-design/icons";
+import { PlusOutlined, DownloadOutlined } from "@ant-design/icons";
 import { DatePicker, Button, Form, Input, InputNumber, message } from "antd";
 
 import axiosInstance from "../../utils/axiosInstance";
@@ -10,6 +10,8 @@ import type { Dayjs } from "dayjs";
 import type { TimeRangePickerProps } from "antd";
 import type { DatePickerProps } from "antd";
 import { RecordValuesInterface } from "../../types/record.values.interface";
+import { RecordDataInterface } from "../../types/record.data.interface";
+import { useAppContext } from "../../context/App.Context";
 
 const { RangePicker } = DatePicker;
 
@@ -23,7 +25,9 @@ const rangePresets: TimeRangePickerProps["presets"] = [
 const HandleRecord: React.FC = () => {
   const [form] = Form.useForm();
   const defaultRange: [Dayjs, Dayjs] = [dayjs(), dayjs()];
+  const { userInfo } = useAppContext();
   const today = dayjs().format("YYYY-MM-DD");
+  const { setUserRecords } = useAppContext();
 
   useEffect(() => {
     const fetchRecords = async () => {
@@ -46,12 +50,12 @@ const HandleRecord: React.FC = () => {
     if (dates) {
       try {
         const records = await axiosInstance.get(
-          `/records/?from=${dateStrings[0]}&to=${dateStrings[1]}`
+          `/records/filter/?from=${dateStrings[0]}&to=${dateStrings[1]}`
         );
         if (records.data.length > 0) {
-          console.log(records.data);
+          setUserRecords(records.data);
         } else {
-          message.info("No records found for the selected date range.");
+          setUserRecords([]);
         }
       } catch {
         message.error("Error fetching records");
@@ -70,6 +74,10 @@ const HandleRecord: React.FC = () => {
       };
 
       const response = await axiosInstance.post("/records", payload);
+      setUserRecords((prevRecords: RecordDataInterface[]) => [
+        response.data.record,
+        ...prevRecords,
+      ]);
       form.resetFields();
       message.success(response.data.message);
     } catch (error: unknown) {
@@ -88,18 +96,38 @@ const HandleRecord: React.FC = () => {
     if (date) {
       try {
         const records = await axiosInstance.get(
-          `/records/?from=${dateString}&to=${dateString}`,
+          `/records/filter/?from=${dateString}&to=${dateString}`,
           {}
         );
-        console.log(records);
+        setUserRecords(records.data);
       } catch {
         message.error("Error fetching records");
       }
     } else {
-      console.log("Clear");
+      setUserRecords([]);
     }
   };
 
+  const handleExport = async (userId: string) => {
+    console.log("Exporting records for user:", userId);
+    try {
+      const response = await axiosInstance.get(`/records/export/${userId}`, {
+        responseType: "blob", // To handle file download
+      });
+
+      // Create a URL for the blob
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `user_${userId}_records.csv`); // File name
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error("Error exporting records:", error);
+      message.error("Failed to export records.");
+    }
+  };
   return (
     <div>
       <div className="item-display-center mb-16">
@@ -148,8 +176,23 @@ const HandleRecord: React.FC = () => {
             <InputNumber min={0} max={12} />
           </Form.Item>
           <Form.Item>
-            <Button type="primary" icon={<PlusOutlined />} htmlType="submit">
+            <Button
+              variant="solid"
+              color="cyan"
+              icon={<PlusOutlined />}
+              htmlType="submit"
+            >
               Add Record
+            </Button>
+          </Form.Item>
+          <Form.Item>
+            <Button
+              variant="solid"
+              color="danger"
+              icon={<DownloadOutlined />}
+              onClick={() => handleExport(String(userInfo?.id))}
+            >
+              Export history
             </Button>
           </Form.Item>
         </Form>

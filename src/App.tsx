@@ -1,18 +1,33 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
-import Register from "./pages/auth/Register";
-import Login from "./pages/auth/Login";
+import Register from "./pages/auth/register/Register";
+import Login from "./pages/auth/login/Login";
 import Landing from "./pages/Landing";
+import { Navigate } from "react-router-dom";
+
+function ProtectedRoute({ children }: { children: JSX.Element }) {
+  const isAuthenticated = localStorage.getItem("authToken");
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+  return children;
+}
 
 function App() {
   return (
     <div>
       <Router>
         <Routes>
-          <Route path="/register" element={<Register />} />
+          <Route
+            path="/dashboard/*"
+            element={
+              <ProtectedRoute>
+                <Landing />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/" element={<Login />} />
-          <Route path="/dashboard/*" element={<Landing />} />
-          <Route path="*" element={<div>404 Not Found</div>} />
+          <Route path="/register" element={<Register />} />
         </Routes>
       </Router>
     </div>

@@ -1,31 +1,29 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Table,
   Input,
   Select,
   Button,
   message,
-  Popconfirm,
   Modal,
-  Typography,
   Form,
+  Popconfirm,
 } from "antd";
 import axiosInstance from "../utils/axiosInstance";
-import dayjs from "dayjs";
+import { useAppContext } from "../context/App.Context";
 import {
   EditOutlined,
   DeleteOutlined,
   SaveOutlined,
-  CloseSquareOutlined,
-  HistoryOutlined,
   CloseOutlined,
+  PlusOutlined,
+  MailOutlined,
+  UserOutlined,
+  LockOutlined,
+  UserAddOutlined,
 } from "@ant-design/icons";
-
-import { useAppContext } from "../context/App.Context";
-import EditableCell from "../components/editableCells";
-
-import { RecordDataInterface } from "../types/record.data.interface";
-import { TableColumn } from "../types/table.column.interface";
+import { RegisterValuesInterface } from "../types/auth.types/register.values.interface";
+import { MESSAGES } from "../constants/messages";
 
 interface User {
   _id: string;
@@ -35,16 +33,13 @@ interface User {
   role: string;
 }
 
-const UsersPage: React.FC = () => {
+const Users: React.FC = () => {
   const [form] = Form.useForm();
   const { userInfo } = useAppContext();
-
   const [users, setUsers] = useState<User[]>([]);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [editedUser, setEditedUser] = useState<Partial<User>>({});
-  const [editingKey, setEditingKey] = useState<string>("");
-  const [isOpen, setIsOpen] = useState(false);
-  const [userRecords, setUserRecords] = useState<RecordDataInterface[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -62,7 +57,7 @@ const UsersPage: React.FC = () => {
 
   const startEditing = (user: User) => {
     setEditingUserId(user._id);
-    setEditedUser(user); // Populate the editedUser state with the user's data
+    setEditedUser(user);
   };
 
   const cancelEditing = () => {
@@ -75,90 +70,93 @@ const UsersPage: React.FC = () => {
       const response = await axiosInstance.put(`/users/${userId}`, editedUser);
       message.success(response.data.message);
 
-      // Update the local state with the new data
       setUsers((prevUsers) =>
         prevUsers.map((user) =>
           user._id === userId ? { ...user, ...editedUser } : user
         )
       );
-      setEditingUserId(null); // Exit editing mode
+      setEditingUserId(null);
     } catch (error) {
       console.error("Error saving changes:", error);
       message.error("Failed to save changes.");
     }
   };
 
-  const isEditing = (record: RecordDataInterface) => record.key === editingKey;
-
   const handleDelete = async (userId: string) => {
     try {
       await axiosInstance.delete(`/users/${userId}`);
       setUsers((prevUsers) => prevUsers.filter((user) => user._id !== userId));
-      message.success("User deleted successfully!");
-    } catch (error) {
-      console.error("Error deleting user:", error);
-      message.error("Failed to delete user.");
-    }
-  };
-  const userRecordDelete = async (recordId: string) => {
-    try {
-      await axiosInstance.delete(`/records/userRecord/${recordId}`);
-      setUserRecords((prevRecords) =>
-        prevRecords.filter((record) => record._id !== recordId)
-      );
-      message.success("Record deleted successfully!");
+      message.success(MESSAGES.USER_DELETE_SUCCESS);
     } catch (error) {
       console.error("Error deleting user:", error);
       message.error("Failed to delete user.");
     }
   };
 
-  const handleShow = async (userId: string) => {
-    const userRecords = await axiosInstance(`/records/user/${userId}`);
-    setUserRecords(userRecords.data);
-    setIsOpen(true);
-  };
-  const handleRecordUpdate = (updatedRecord: RecordDataInterface) => {
-    setUserRecords((prevRecords) =>
-      prevRecords.map((record) =>
-        record._id === updatedRecord._id ? updatedRecord : record
-      )
-    );
-  };
-  const edit = (record: Partial<RecordDataInterface> & { key: React.Key }) => {
-    form.setFieldsValue({
-      date: record.date ? dayjs(record.date, "YYYY-MM-DD") : null,
-      description: "",
-      duration: "",
-      ...record,
-    });
-    setEditingKey(record.key as string);
+  const handleCancel = () => {
+    setIsModalOpen(false);
   };
 
-  const save = async (key: React.Key) => {
-    try {
-      const row = (await form.validateFields()) as RecordDataInterface;
-      const newData = [...userRecords];
-      const index = newData.findIndex((item, idx) => Number(key) === idx);
-      if (index > -1) {
-        const updatedRecord = { ...newData[index], ...row };
-        const response = await axiosInstance.put(
-          `/records/${updatedRecord._id}`,
-          updatedRecord
-        );
-        handleRecordUpdate(response.data);
-        setEditingKey("");
-        message.success("Record updated successfully");
+  const validateMessages = {
+    required: "${label} is required!",
+    types: {
+      email: "${label} is not a valid email!",
+      number: "${label} is not a valid number!",
+    },
+  };
+
+  const validatePassword = (_rule: unknown, value: string) => {
+    const passwordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+    if (!value) {
+      return Promise.reject(new Error("Password is required!"));
+    }
+    if (!passwordRegex.test(value)) {
+      return Promise.reject(new Error(MESSAGES.INVALID_PASSWORD));
+    }
+    return Promise.resolve();
+  };
+
+  const confirmPasswordValidator = (
+    getFieldValue: (field: string) => Promise<string>
+  ) => ({
+    validator: async (_: unknown, value: string) => {
+      if (!value) {
+        return Promise.reject(new Error(MESSAGES.REQUIRED_PASSWORD));
       }
-    } catch (errInfo: unknown) {
+      const password = await getFieldValue("password");
+      if (value !== password) {
+        return Promise.reject(new Error(MESSAGES.PASSWORD_MISMATCH));
+      }
+      return Promise.resolve();
+    },
+  });
+
+  const handleSubmit = async (values: RegisterValuesInterface) => {
+    try {
+      const response = await axiosInstance.post("/auth/register", {
+        email: values.email,
+        name: values.name,
+        password: values.password,
+      });
+      form.resetFields();
+      setUsers((prevUsers) => [...prevUsers, response.data.user]);
+      message.success(MESSAGES.USER_CREATED);
+      setIsModalOpen(false);
+    } catch (error: unknown) {
       const errorMessage =
-        errInfo instanceof Error
-          ? errInfo.message
-          : "An unknown error occurred";
-      message.error("Failed to update record: " + errorMessage);
+        (error as { response?: { data?: { message?: string } } })?.response
+          ?.data?.message || "Something went wrong!";
+      message.error(errorMessage);
     }
   };
+
   const columns = [
+    {
+      title: "No",
+      dataIndex: "no",
+      key: "no",
+      render: (text: string, record: User, index: number) => index + 1,
+    },
     {
       title: "Name",
       dataIndex: "name",
@@ -190,6 +188,7 @@ const UsersPage: React.FC = () => {
       render: (text: number, user: User) =>
         editingUserId === user._id ? (
           <Input
+            min={1}
             type="number"
             value={
               editedUser.preferedHours !== undefined
@@ -212,7 +211,7 @@ const UsersPage: React.FC = () => {
           text
         ),
     },
-    ...(userInfo?.role === "admin"
+    ...(userInfo?.role === "admin" || userInfo?.role === "user_manager"
       ? [
           {
             title: "Role",
@@ -222,7 +221,21 @@ const UsersPage: React.FC = () => {
               const roleMapping: { [key: string]: string } = {
                 user: "User",
                 user_manager: "User Manager",
+                admin: "Admin",
               };
+
+              const roleOptions =
+                userInfo?.role === "admin"
+                  ? [
+                      { value: "user", label: "User" },
+                      { value: "user_manager", label: "User Manager" },
+                      { value: "admin", label: "Admin" },
+                    ]
+                  : [
+                      { value: "user", label: "User" },
+                      { value: "user_manager", label: "User Manager" },
+                    ];
+
               if (editingUserId === user._id) {
                 return (
                   <Select
@@ -233,15 +246,17 @@ const UsersPage: React.FC = () => {
                         role: value,
                       }))
                     }
-                    style={{ width: 120 }}
+                    style={{ width: 150 }}
                   >
-                    <Select.Option value="user">User</Select.Option>
-                    <Select.Option value="user_manager">
-                      User Manager
-                    </Select.Option>
+                    {roleOptions.map((option) => (
+                      <Select.Option key={option.value} value={option.value}>
+                        {option.label}
+                      </Select.Option>
+                    ))}
                   </Select>
                 );
               }
+
               return roleMapping[role] || role;
             },
           },
@@ -261,7 +276,7 @@ const UsersPage: React.FC = () => {
             <Button
               type="primary"
               danger
-              icon={<CloseSquareOutlined />}
+              icon={<CloseOutlined />}
               onClick={cancelEditing}
               style={{ marginLeft: 8 }}
             ></Button>
@@ -280,131 +295,28 @@ const UsersPage: React.FC = () => {
             >
               <Button
                 type="primary"
-                className="mr-7"
                 danger
+                // onClick={() => handleDelete(user._id)}
                 icon={<DeleteOutlined />}
               />
             </Popconfirm>
-            {userInfo && userInfo.role === "admin" && (
-              <Button
-                type="primary"
-                className="mr-7"
-                icon={<HistoryOutlined />}
-                onClick={() => handleShow(String(user._id))}
-              />
-            )}
           </>
         ),
     },
   ];
-  const originData = useMemo(
-    () =>
-      userRecords.map((record, index) => ({
-        key: index.toString(),
-        _id: record._id,
-        date: record.date.substring(0, 10),
-        duration: record.duration || 8,
-        description: record.description || "",
-      })),
-    [userRecords]
-  );
-
-  const userRecordsColumns: TableColumn[] = [
-    {
-      title: "Date",
-      dataIndex: "date",
-      key: "date",
-      // editable: true,
-      inputType: "date",
-      // render: (_: unknown, record: RecordDataInterface) =>
-      //   isEditing(record) ? (
-      //     <Form.Item
-      //       name="date"
-      //       rules={[{ required: true, message: "Please select a date!" }]}
-      //     >
-      //       <DatePicker
-      //         format="YYYY-MM-DD"
-      //         value={record.date ? dayjs(record.date, "YYYY-MM-DD") : null}
-      //       />
-      //     </Form.Item>
-      //   ) : (
-      //     record.date
-      //   ),
-    },
-    {
-      title: "Description",
-      dataIndex: "description",
-      editable: true,
-      inputType: "text",
-    },
-    {
-      title: "Hour(s)",
-      dataIndex: "duration",
-      editable: true,
-      inputType: "number",
-    },
-    {
-      title: "Operation",
-      dataIndex: "operation",
-      render: (_: unknown, record: RecordDataInterface) => {
-        const editable = isEditing(record);
-        return editable ? (
-          <span>
-            <Button
-              type="link"
-              onClick={() => save(record.key)}
-              icon={<SaveOutlined />}
-            />
-            <Button
-              type="link"
-              icon={<CloseOutlined />}
-              onClick={() => setEditingKey("")}
-            />
-          </span>
-        ) : (
-          <>
-            <Typography.Link
-              disabled={editingKey !== ""}
-              onClick={() => edit(record)}
-            >
-              <Button type="link" icon={<EditOutlined />} />
-            </Typography.Link>
-            <Typography.Link disabled={editingKey !== ""}>
-              <Button
-                type="link"
-                danger
-                icon={<DeleteOutlined />}
-                onClick={() => userRecordDelete(record._id)}
-              />
-            </Typography.Link>
-          </>
-        );
-      },
-    },
-  ];
-  const mergedColumns = useMemo(
-    () =>
-      userRecordsColumns.map((col) => {
-        if (!col.editable) {
-          return col;
-        }
-        return {
-          ...col,
-          onCell: (record: RecordDataInterface) => ({
-            record,
-            inputType: col.inputType,
-            dataIndex: col.dataIndex,
-            title: col.title,
-            editing: isEditing(record),
-          }),
-        };
-      }),
-    [columns, editingKey]
-  );
 
   return (
     <div>
-      <h2>User Management</h2>
+      <div className="item-display-center">
+        <h2>User Management</h2>
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={() => setIsModalOpen(true)}
+        >
+          Create User
+        </Button>
+      </div>
       <Table
         columns={columns}
         dataSource={users.map((user) => ({ ...user, key: user._id }))}
@@ -412,28 +324,67 @@ const UsersPage: React.FC = () => {
         bordered
       />
       <Modal
-        title={"Records"}
-        open={isOpen}
-        onOk={() => setIsOpen(false)}
-        onCancel={() => setIsOpen(false)}
-        closeIcon={null}
+        title="Create User"
+        open={isModalOpen}
+        onCancel={handleCancel}
+        footer={null}
       >
-        <Form form={form} component={false}>
-          <Table
-            components={{
-              body: {
-                cell: EditableCell,
-              },
-            }}
-            bordered
-            dataSource={originData}
-            columns={mergedColumns}
-            rowClassName={"editable-row"}
-          />
+        <Form
+          form={form}
+          name="register-form"
+          onFinish={handleSubmit}
+          validateMessages={validateMessages}
+          initialValues={{
+            email: "",
+            name: "",
+            password: "",
+            confirm: "",
+          }}
+        >
+          <Form.Item
+            name="email"
+            rules={[{ type: "email" }, { required: true }]}
+          >
+            <Input prefix={<MailOutlined />} placeholder="Email" />
+          </Form.Item>
+          <Form.Item name="name" rules={[{ required: true }]}>
+            <Input prefix={<UserOutlined />} placeholder="Name" />
+          </Form.Item>
+          <Form.Item
+            name="password"
+            rules={[{ validator: validatePassword }]}
+            hasFeedback
+          >
+            <Input.Password prefix={<LockOutlined />} placeholder="Password" />
+          </Form.Item>
+          <Form.Item
+            name="confirm"
+            dependencies={["password"]}
+            hasFeedback
+            rules={[
+              ({ getFieldValue }) => confirmPasswordValidator(getFieldValue),
+            ]}
+          >
+            <Input.Password
+              prefix={<LockOutlined />}
+              placeholder="Confirm Password"
+            />
+          </Form.Item>
+          <Form.Item label={null}>
+            <Button
+              className="mt-10"
+              type="primary"
+              htmlType="submit"
+              icon={<UserAddOutlined />}
+              block
+            >
+              Add User
+            </Button>
+          </Form.Item>
         </Form>
       </Modal>
     </div>
   );
 };
 
-export default UsersPage;
+export default Users;

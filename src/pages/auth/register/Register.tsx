@@ -8,8 +8,9 @@ import {
   LockOutlined,
 } from "@ant-design/icons";
 
-import { RegisterValuesInterface } from "../../types/auth.types/register.values.interface";
-import axiosInstance from "../../utils/axiosInstance";
+import { RegisterValuesInterface } from "../../../types/auth.types/register.values.interface";
+import axiosInstance from "../../../utils/axiosInstance";
+import { MESSAGES } from "../../../constants/messages";
 
 const validateMessages = {
   required: "${label} is required!",
@@ -25,11 +26,7 @@ const validatePassword = (_rule: unknown, value: string) => {
     return Promise.reject(new Error("Password is required!"));
   }
   if (!passwordRegex.test(value)) {
-    return Promise.reject(
-      new Error(
-        "Password must be at least 8 characters long and include at least one number and one special character (!@#$%^&*)."
-      )
-    );
+    return Promise.reject(new Error(MESSAGES.INVALID_PASSWORD));
   }
   return Promise.resolve();
 };
@@ -39,11 +36,11 @@ const confirmPasswordValidator = (
 ) => ({
   validator: async (_: unknown, value: string) => {
     if (!value) {
-      return Promise.reject(new Error("Please confirm your password!"));
+      return Promise.reject(new Error(MESSAGES.REQUIRED_PASSWORD));
     }
     const password = await getFieldValue("password");
     if (value !== password) {
-      return Promise.reject(new Error("Passwords do not match!"));
+      return Promise.reject(new Error(MESSAGES.PASSWORD_MISMATCH));
     }
     return Promise.resolve();
   },
@@ -53,18 +50,15 @@ const Register: React.FC = () => {
   const navigate = useNavigate();
   const handleSubmit = async (values: RegisterValuesInterface) => {
     try {
-      // Send a POST request to the backend
       const response = await axiosInstance.post("/auth/register", {
         email: values.email,
         name: values.name,
         password: values.password,
       });
 
-      // Handle success
-      message.success(response.data.message || "Registered successfully!");
+      message.success(response.data.message);
       navigate("/");
     } catch (error: unknown) {
-      // Handle error
       const errorMessage =
         (error as { response?: { data?: { message?: string } } })?.response
           ?.data?.message || "Something went wrong!";

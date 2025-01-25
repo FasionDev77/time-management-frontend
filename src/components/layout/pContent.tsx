@@ -8,7 +8,6 @@ import {
 } from "@ant-design/icons";
 import { Button, Form, Table, Typography, message } from "antd";
 
-// import { useAppContext } from "../../context/App.Context";
 import axiosInstance from "../../utils/axiosInstance";
 import HandleRecord from "./handleRecord";
 import EditableCell from "../editableCells";
@@ -18,10 +17,8 @@ import { TableColumn } from "../../types/table.column.interface";
 
 const RecordTable: React.FC = () => {
   const [form] = Form.useForm();
-  const [records, setRecords] = useState<RecordDataInterface[]>([]);
   const [editingKey, setEditingKey] = useState<string>("");
-  const { userInfo } = useAppContext();
-  // const today = dayjs().format("YYYY-MM-DD");
+  const { userInfo, setUserRecords, userRecords } = useAppContext();
 
   useEffect(() => {
     const fetchRecords = async () => {
@@ -56,7 +53,7 @@ const RecordTable: React.FC = () => {
           totalHours: groupedData[record.date]?.totalHours || 0,
         }));
 
-        setRecords(updatedRecords);
+        setUserRecords(updatedRecords);
 
         if (result.status === 404) {
           message.info("No records found");
@@ -64,14 +61,14 @@ const RecordTable: React.FC = () => {
       } catch (error: unknown) {
         console.error(error);
         message.error("Failed to fetch records");
-        setRecords([]);
+        setUserRecords([]);
       }
     };
     fetchRecords();
   }, []);
 
   const handleRecordUpdate = (updatedRecord: RecordDataInterface) => {
-    setRecords((prevRecords) =>
+    setUserRecords((prevRecords) =>
       prevRecords.map((record) =>
         record._id === updatedRecord._id ? updatedRecord : record
       )
@@ -80,14 +77,16 @@ const RecordTable: React.FC = () => {
 
   const originData = useMemo(
     () =>
-      records.map((record, index) => ({
-        key: index.toString(),
-        _id: record._id,
-        date: record.date.substr(0, 10),
-        duration: record.duration || 8,
-        description: record.description || "",
-      })),
-    [records]
+      userRecords.map((record, index) => {
+        return {
+          key: index.toString(),
+          _id: record._id,
+          date: record.date ? dayjs(record.date, "YYYY-MM-DD") : null,
+          duration: record.duration || 8,
+          description: record.description || "",
+        };
+      }),
+    [userRecords]
   );
 
   const isEditing = (record: RecordDataInterface) => record.key === editingKey;
@@ -105,7 +104,7 @@ const RecordTable: React.FC = () => {
   const save = async (key: React.Key) => {
     try {
       const row = (await form.validateFields()) as RecordDataInterface;
-      const newData = [...records];
+      const newData = [...userRecords];
       const index = newData.findIndex((item, idx) => Number(key) === idx);
       if (index > -1) {
         const updatedRecord = { ...newData[index], ...row };
@@ -113,7 +112,7 @@ const RecordTable: React.FC = () => {
           `/records/${updatedRecord._id}`,
           updatedRecord
         );
-        handleRecordUpdate(response.data);
+        handleRecordUpdate(response.data.updatedRecord);
         setEditingKey("");
         message.success("Record updated successfully");
       }
@@ -129,7 +128,7 @@ const RecordTable: React.FC = () => {
   const handleDelete = async (id: string) => {
     try {
       await axiosInstance.delete(`/records/${id}`);
-      setRecords((prevRecords) =>
+      setUserRecords((prevRecords) =>
         prevRecords.filter((item) => item._id !== id)
       );
       message.success("Record deleted successfully");
@@ -141,25 +140,20 @@ const RecordTable: React.FC = () => {
   };
   const columns: TableColumn[] = [
     {
+      title: "No",
+      dataIndex: "no",
+      key: "no",
+      render: (_: string | number, __: RecordDataInterface, index: number) =>
+        index + 1,
+    },
+    {
       title: "Date",
       dataIndex: "date",
       key: "date",
-      // editable: true,
+      editable: true,
       inputType: "date",
-      // render: (_: unknown, record: RecordDataInterface) =>
-      //   isEditing(record) ? (
-      //     <Form.Item
-      //       name="date"
-      //       rules={[{ required: true, message: "Please select a date!" }]}
-      //     >
-      //       <DatePicker
-      //         format="YYYY-MM-DD"
-      //         value={record.date ? dayjs(record.date, "YYYY-MM-DD") : null}
-      //       />
-      //     </Form.Item>
-      //   ) : (
-      //     record.date
-      //   ),
+      render: (text: string | number, record: RecordDataInterface) =>
+        new Date(record.date).toISOString().substring(0, 10),
     },
     {
       title: "Description",
@@ -181,12 +175,14 @@ const RecordTable: React.FC = () => {
         return editable ? (
           <span>
             <Button
-              type="link"
+              className="mr-7"
+              type="primary"
               onClick={() => save(record.key)}
               icon={<SaveOutlined />}
             />
             <Button
-              type="link"
+              type="primary"
+              danger
               icon={<CloseOutlined />}
               onClick={() => setEditingKey("")}
             />
@@ -195,13 +191,15 @@ const RecordTable: React.FC = () => {
           <>
             <Typography.Link
               disabled={editingKey !== ""}
-              onClick={() => edit(record)}
+              onClick={() => {
+                edit(record);
+              }}
             >
-              <Button type="link" icon={<EditOutlined />} />
+              <Button className="mr-7" type="primary" icon={<EditOutlined />} />
             </Typography.Link>
             <Typography.Link disabled={editingKey !== ""}>
               <Button
-                type="link"
+                type="primary"
                 danger
                 icon={<DeleteOutlined />}
                 onClick={() => handleDelete(record._id)}
@@ -246,8 +244,9 @@ const RecordTable: React.FC = () => {
           bordered
           dataSource={originData}
           columns={mergedColumns}
+          pagination={{ defaultPageSize: 8 }}
           rowClassName={(record) => {
-            const sameDateRecords = records.filter(
+            const sameDateRecords = userRecords.filter(
               (item) => item.date.substring(0, 10) === record.date
             );
             const totalHours = sameDateRecords.reduce(
@@ -263,5 +262,4 @@ const RecordTable: React.FC = () => {
     </>
   );
 };
-
 export default RecordTable;

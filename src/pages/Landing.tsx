@@ -7,7 +7,8 @@ import PHeader from "../components/layout/pHeader";
 import PContent from "../components/layout/pContent";
 import PFooter from "../components/layout/pFooter";
 import Profile from "./Profile";
-import UserTable from "./Users";
+import Users from "./Users";
+import UsersRecords from "./UsersRecords";
 
 const LandingPage = () => {
   return (
@@ -19,8 +20,9 @@ const LandingPage = () => {
           <Routes>
             <Route path="" element={<PContent />} />
             <Route path="profile" element={<Profile />} />
-            <Route path="admin" element={<UserTable />} />
-            <Route path="user-management" element={<UserTable />} />
+            <Route path="admin" element={<Users />} />
+            <Route path="user-management" element={<Users />} />
+            <Route path="users-records" element={<UsersRecords />} />
           </Routes>
         </Content>
         <PFooter />

@@ -1,0 +1,23 @@
+export const MESSAGES = {
+  INVALID_PASSWORD:
+    "Password must be at least 8 characters long and include at least one number and one special character (!@#$%^&*).",
+  USER_CREATED: "User created successfully.",
+  USER_DELETE_SUCCESS: "User deleted successfully.",
+  REQUIRED_PASSWORD: "Password is required.",
+  PASSWORD_MISMATCH: "Passwords do not match.",
+  USER_ALREADY_EXISTS: "User already exists.",
+  RECORD_CREATED: "Record created successfully.",
+  RECORD_UPDATED: "Record updated successfully.",
+  RECORD_DELETED: "Record deleted successfully.",
+  RECORD_NOT_FOUND: "Record not found.",
+  RECORD_DELETE_ERROR: "Error deleting record.",
+  RECORD_UPDATE_ERROR: "Error updating record.",
+  RECORD_CREATE_ERROR: "Error creating record.",
+  RECORD_LIST_ERROR: "Error fetching records.",
+  RECORD_LIST_EMPTY: "No records found.",
+  RECORD_LIST_SUCCESS: "Records fetched successfully.",
+  RECORD_LIST_FAILURE: "Failed to fetch records.",
+  RECORD_LIST_EMPTY_FAILURE: "No records found.",
+  RECORD_LIST_SUCCESS_EMPTY: "No records found.",
+  RECORD_LIST_FAILURE_EMPTY: "Failed to fetch records.",
+};

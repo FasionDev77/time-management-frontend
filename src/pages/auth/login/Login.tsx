@@ -6,8 +6,8 @@ import { MailOutlined, LockOutlined } from "@ant-design/icons";
 
 import type { FormProps } from "antd";
 
-import axiosInstance from "../../utils/axiosInstance";
-import { useAppContext } from "../../context/App.Context";
+import axiosInstance from "../../../utils/axiosInstance";
+import { useAppContext } from "../../../context/App.Context";
 
 type FieldType = {
   email?: string;
@@ -36,18 +36,16 @@ const App: React.FC = () => {
       setAuthToken(token);
       localStorage.setItem("authToken", token);
       const decodedUser: { role: string } = jwtDecode(token);
-      // Redirect based on user role
       const rolePaths: { [key: string]: string } = {
         user: "/dashboard",
         user_manager: "/dashboard/user-management",
         admin: "/dashboard/admin",
       };
 
-      // Redirect based on user role
       const path = rolePaths[decodedUser.role];
       if (path) {
         navigate(path);
-        message.success("Login successful!");
+        message.success(response.data.message);
       } else {
         message.error("Invalid role detected. Contact support.");
       }

@@ -1,26 +1,18 @@
-import { useState } from "react";
+import { Form, Input, Button, Row, Col, Card, Typography, message } from "antd";
 import {
-  Form,
-  Input,
-  Button,
-  Row,
-  Col,
-  Card,
-  Typography,
-  Avatar,
-  message,
-} from "antd";
-import { UserOutlined, MailOutlined } from "@ant-design/icons";
+  UserOutlined,
+  MailOutlined,
+  LockOutlined,
+  SaveOutlined,
+} from "@ant-design/icons";
 import { useAppContext } from "../context/App.Context";
 import axiosInstance from "../utils/axiosInstance";
+import { MESSAGES } from "../constants/messages";
+import { useEffect } from "react";
 
 const Profile = () => {
   const [form] = Form.useForm();
-  const { userInfo } = useAppContext();
-  const [isDisabled, setIsDisabled] = useState(true);
-
-  const handleEdit = () => setIsDisabled(false);
-  const handleCancel = () => setIsDisabled(true);
+  const { userInfo, setUserInfo } = useAppContext();
 
   const handleSave = async (values: {
     name: string;
@@ -28,9 +20,12 @@ const Profile = () => {
     preferedHours: number;
   }) => {
     try {
-      await axiosInstance.put(`/users/${userInfo?.id}`, values);
-      message.success("Profile updated successfully!");
-      setIsDisabled(true);
+      const response = await axiosInstance.put(
+        `/users/${userInfo?.id}`,
+        values
+      );
+      setUserInfo(response.data.updatedUser);
+      message.success(response.data.message);
     } catch (error: unknown) {
       if (error instanceof Error) {
         message.error(`Failed to update profile: ${error.message}`);
@@ -39,6 +34,26 @@ const Profile = () => {
       }
     }
   };
+
+  useEffect(() => {
+    form.setFieldsValue({
+      name: userInfo?.name,
+      email: userInfo?.email,
+      preferedHours: userInfo?.preferedHours,
+    });
+  }, [userInfo]);
+  const validatePassword = (_rule: unknown, value: string) => {
+    console.log("value", value);
+    if (value === undefined) {
+      return Promise.resolve();
+    }
+    const passwordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+    if (!passwordRegex.test(value)) {
+      return Promise.reject(new Error(MESSAGES.INVALID_PASSWORD));
+    }
+    return Promise.resolve();
+  };
+
   return (
     <div
       style={{
@@ -57,8 +72,7 @@ const Profile = () => {
             }}
           >
             <div style={{ marginBottom: 20 }}>
-              <Avatar size={100} icon={<UserOutlined />} />
-              <Typography.Title level={3}>{userInfo?.name}</Typography.Title>
+              <Typography.Title level={3}>My Profile</Typography.Title>
             </div>
             <Form
               form={form}
@@ -76,7 +90,6 @@ const Profile = () => {
                 rules={[{ required: true, message: "Please enter your name" }]}
               >
                 <Input
-                  disabled={isDisabled}
                   prefix={<UserOutlined />}
                   style={{
                     borderRadius: 10,
@@ -96,7 +109,6 @@ const Profile = () => {
                 ]}
               >
                 <Input
-                  disabled={isDisabled}
                   prefix={<MailOutlined />}
                   style={{
                     borderRadius: 10,
@@ -105,58 +117,58 @@ const Profile = () => {
                 />
               </Form.Item>
               <Form.Item
-                label="Prefered Working hours"
-                name="preferedHours"
-                rules={[
-                  { required: true, message: "Please enter working hours" },
-                ]}
+                label="Password"
+                name="password"
+                rules={[{ validator: validatePassword }]}
               >
-                <Input
-                  disabled={isDisabled}
-                  type="number"
+                <Input.Password
+                  prefix={<LockOutlined />}
                   style={{
                     borderRadius: 10,
                     border: "1px solid #bbdefb",
                   }}
                 />
               </Form.Item>
-              <div style={{ textAlign: "center", marginTop: 20 }}>
-                {isDisabled ? (
-                  <Button
-                    onClick={handleEdit}
-                    style={{
-                      borderRadius: 20,
-                      color: "#42a5f5",
-                      border: "1px solid #bbdefb",
-                    }}
+              <Row gutter={60} justify={"space-between"}>
+                <Col>
+                  <Form.Item
+                    label="Prefered Working hours"
+                    className="width-100"
+                    name="preferedHours"
+                    rules={[
+                      { required: true, message: "Please enter working hours" },
+                    ]}
                   >
-                    Edit Profile
+                    <Input
+                      type="number"
+                      style={{
+                        borderRadius: 10,
+                        border: "1px solid #bbdefb",
+                      }}
+                    />
+                  </Form.Item>
+                </Col>
+                <Form.Item
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "end",
+                  }}
+                >
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    style={{
+                      marginRight: 30,
+                      width: 150,
+                      border: "none",
+                    }}
+                    icon={<SaveOutlined />}
+                  >
+                    Save
                   </Button>
-                ) : (
-                  <>
-                    <Button
-                      type="primary"
-                      htmlType="submit"
-                      style={{
-                        marginRight: 10,
-                        borderRadius: 20,
-                        border: "none",
-                      }}
-                    >
-                      Save
-                    </Button>
-                    <Button
-                      onClick={handleCancel}
-                      style={{
-                        borderRadius: 20,
-                        border: "1px solid #e0e0e0",
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                  </>
-                )}
-              </div>
+                </Form.Item>
+              </Row>
             </Form>
           </Card>
         </Col>

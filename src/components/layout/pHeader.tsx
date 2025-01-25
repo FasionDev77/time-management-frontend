@@ -9,17 +9,16 @@ import {
 import type { MenuProps } from "antd";
 
 import { useAppContext } from "../../context/App.Context";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 const { Header } = Layout;
 
 const PHeader: React.FC = () => {
-  const navigate = useNavigate();
   const { userInfo, logout } = useAppContext();
 
   const handleLogout = () => {
     logout();
-    navigate("/");
+    window.location.href = "/";
   };
 
   const items: MenuProps["items"] = [
@@ -42,8 +41,21 @@ const PHeader: React.FC = () => {
           },
         ]
       : []),
+    ...(userInfo?.role === "admin"
+      ? [
+          {
+            key: "2",
+            label: (
+              <Link to="/dashboard/users-records">
+                <span>Users's Records</span>
+              </Link>
+            ),
+            icon: <UserOutlined />,
+          },
+        ]
+      : []),
     {
-      key: "2",
+      key: "3",
       label: (
         <Link to="/dashboard">
           <span>Dashboard</span>
@@ -52,7 +64,7 @@ const PHeader: React.FC = () => {
       icon: <DashboardOutlined />,
     },
     {
-      key: "3",
+      key: "4",
       label: (
         <Link to="/dashboard/profile">
           <span>My Profile</span>
@@ -61,7 +73,7 @@ const PHeader: React.FC = () => {
       icon: <UserOutlined />,
     },
     {
-      key: "4",
+      key: "5",
       label: (
         <span className="color-red" onClick={handleLogout}>
           Log out
